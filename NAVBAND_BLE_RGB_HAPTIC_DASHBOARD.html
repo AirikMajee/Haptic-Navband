@@ -1,0 +1,2581 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAVBAND | Assistive Navigation Operations Console</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+:root{
+ --bg:#08111e;--panel:#101d2d;--panel2:#142438;--line:#26394f;
+ --text:#e8f0f8;--muted:#91a4b9;--cyan:#35c6e8;--green:#35d39a;
+ --amber:#f4b84a;--red:#ff647c;--blue:#5b9dff;
+ --shadow:0 12px 32px #0005;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 15% 0%,#13283d 0,transparent 38%),var(--bg);color:var(--text);font:14px/1.45 Inter,Segoe UI,Arial,sans-serif}
+button,input{font:inherit}
+button{border:1px solid #36516d;background:#1b3550;color:var(--text);padding:10px 13px;border-radius:8px;cursor:pointer;font-weight:650;transition:.18s}
+button:hover{filter:brightness(1.18);transform:translateY(-1px)}
+button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+button.primary{background:#087da0;border-color:#159cbd}
+button.good{background:#126c52;border-color:#1c9a70}
+button.warn{background:#79521a;border-color:#aa792d}
+button.danger{background:#78283b;border-color:#a83d55}
+button.ghost{background:transparent}
+input{width:100%;background:#0a1726;color:var(--text);border:1px solid #30465e;border-radius:8px;padding:11px 12px;outline:none}
+input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #35c6e822}
+.topbar{min-height:76px;padding:14px 22px;border-bottom:1px solid var(--line);background:#0b1725ed;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:1000;backdrop-filter:blur(14px)}
+.brand{display:flex;align-items:center;gap:12px}
+.brandmark{height:42px;width:42px;border:1px solid #267d99;background:linear-gradient(145deg,#153b52,#10283a);border-radius:12px;display:grid;place-items:center;color:var(--cyan);font-size:21px;font-weight:900}
+.brand h1{font-size:19px;letter-spacing:2px;margin:0}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:11px;letter-spacing:1.3px;text-transform:uppercase}
+.topright{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--line);border-radius:30px;background:#101e2d;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase}
+.dot{width:7px;height:7px;border-radius:50%;background:#70849a;box-shadow:0 0 0 3px #70849a22}
+.dot.green{background:var(--green);box-shadow:0 0 0 3px #35d39a22}
+.dot.amber{background:var(--amber)}
+.dot.red{background:var(--red)}
+.clock{font-variant-numeric:tabular-nums;color:#c3d2e2;font-size:12px;min-width:150px;text-align:right}
+.wrap{max-width:1600px;margin:auto;padding:18px 22px 28px}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:4px 0 12px}
+.eyebrow{font-size:10px;letter-spacing:1.5px;color:var(--cyan);font-weight:800;text-transform:uppercase}
+h2{font-size:17px;margin:2px 0 0}
+h3{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#b9c9d9;margin:0 0 13px}
+.subtle{color:var(--muted);font-size:12px}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:14px}
+.panel{background:linear-gradient(145deg,#142438,#0f1c2b);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);min-width:0}
+.kpi{padding:15px 16px;position:relative;overflow:hidden}
+.kpi:after{content:"";position:absolute;right:-22px;top:-28px;width:90px;height:90px;border-radius:50%;background:#35c6e80b}
+.kpi-label{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:800}
+.kpi-value{font-size:25px;font-weight:750;letter-spacing:-.6px;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.kpi-foot{font-size:11px;color:var(--muted)}
+.main-grid{grid-template-columns:minmax(0,1.7fr) minmax(310px,.85fr);align-items:stretch}
+.map-panel{padding:14px}
+.panel-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.panel-title h2{font-size:14px;letter-spacing:.7px;text-transform:uppercase}
+.search-row{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;margin-bottom:10px}
+#map{height:470px;border-radius:10px;border:1px solid #2b4056;z-index:1;background:#0b1725}
+.map-legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 2px 0;color:var(--muted);font-size:11px}
+.legend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.side-stack{display:grid;gap:12px;grid-template-rows:auto auto auto 1fr}
+.pad{padding:15px}
+.nav-instruction{background:linear-gradient(130deg,#0c4053,#102b40);border:1px solid #1b6178;border-radius:11px;padding:15px;margin-bottom:12px}
+.nav-instruction .direction{font-size:23px;font-weight:800;margin:5px 0;color:#fff}
+.nav-instruction .distance{font-size:30px;font-weight:800;color:var(--cyan);font-variant-numeric:tabular-nums}
+.progress{height:6px;background:#26394d;border-radius:8px;overflow:hidden;margin:10px 0 4px}
+.progress>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#159bbd,#35d39a);transition:width .3s}
+.statline{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #26394f;font-size:12px}
+.statline:last-child{border:0}
+.statline strong{font-variant-numeric:tabular-nums;text-align:right}
+.command-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.command-grid button{margin:0;padding:12px 5px}
+.pulse-list{display:grid;gap:7px}
+.pulse-row{display:grid;grid-template-columns:74px 1fr auto;gap:8px;align-items:center;padding:8px 9px;background:#0b1928;border:1px solid #26394f;border-radius:8px;font-size:11px}
+.pulse-code{font-weight:850;color:var(--cyan);letter-spacing:.7px}
+.pulse-pattern{color:#c4d3e2}
+.pulse-state{color:var(--amber);font-size:9px;font-weight:800;text-transform:uppercase}
+.pulse-bars{display:flex;gap:3px;align-items:center;height:14px;margin-top:4px}
+.pulse-bars i{display:block;width:9px;height:7px;border-radius:2px;background:#36506b}
+.pulse-bars i.on{height:13px;background:var(--cyan)}
+.event-log{max-height:190px;overflow:auto;display:grid;gap:6px}
+.log-entry{display:grid;grid-template-columns:65px 1fr;gap:8px;font-size:11px;padding-bottom:6px;border-bottom:1px solid #26394f}
+.log-time{color:#7891aa;font-variant-numeric:tabular-nums}
+.log-msg{color:#c6d4e2}
+.log-msg.warn{color:var(--amber)}
+.log-msg.good{color:var(--green)}
+.log-msg.error{color:var(--red)}
+.two-col{grid-template-columns:1fr 1fr;margin-top:12px}
+.card-pad{padding:15px}
+.inline{display:flex;gap:7px;flex-wrap:wrap}
+.inline>*{flex:1}
+.small{font-size:10px;color:var(--muted);line-height:1.5}
+.notice{border:1px solid #70531f;background:#352b19;color:#f5d28b;padding:10px 12px;border-radius:9px;font-size:11px;line-height:1.5;margin-top:10px}
+.tag{font-size:9px;padding:4px 7px;border-radius:20px;background:#203b50;color:#a8dff0;text-transform:uppercase;letter-spacing:.7px;font-weight:800}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#142438;color:#e8f0f8}
+.search-results{display:none;background:#0a1726;border:1px solid #30465e;border-radius:9px;margin:-3px 0 9px;overflow:hidden}
+.search-results.show{display:block}
+.search-result{padding:9px 11px;border-bottom:1px solid #26394f;cursor:pointer;font-size:11px;color:var(--text)}
+.search-result:hover{background:#18334b}
+.search-result small{display:block;color:var(--muted);margin-top:3px}
+.map-tools{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}
+.map-tools select{background:#0a1726;color:var(--text);border:1px solid #30465e;border-radius:8px;padding:8px 10px;font:inherit}
+.map-tools button{font-size:10px;padding:8px 10px}
+.route-choices{display:grid;gap:7px}
+.route-choice{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;background:#0b1928;border:1px solid #26394f;border-radius:9px;font-size:11px}
+.route-choice.selected{border-color:var(--cyan);background:#123147}
+.route-choice small{display:block;color:var(--muted);margin-top:3px}
+.route-choice button{padding:7px 9px;font-size:10px}
+@media(max-width:1050px){
+ .main-grid{grid-template-columns:1fr}
+ .side-stack{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}
+ .side-stack .log-panel{grid-column:1/-1}
+}
+@media(max-width:700px){
+ .wrap{padding:12px}
+ .topbar{padding:12px}
+ .kpis{grid-template-columns:repeat(2,1fr)}
+ .two-col{grid-template-columns:1fr}
+ .search-row{grid-template-columns:1fr 1fr}
+ .search-row input{grid-column:1/-1}
+ #map{height:380px}
+ .side-stack{grid-template-columns:1fr}
+ .side-stack .log-panel{grid-column:auto}
+ .kpi-value{font-size:21px}
+ .map-tools>*{flex:1}
+ .route-choice{align-items:flex-start}
+}
+</style>
+</head>
+
+<body>
+<header class="topbar">
+ <div class="brand">
+  <div class="brandmark">N</div>
+  <div>
+   <h1>NAVBAND <span style="color:var(--cyan)">/</span> OPS</h1>
+   <p>Assistive navigation · live operations console</p>
+  </div>
+ </div>
+ <div class="topright">
+  <span class="pill"><i id="gpsDot" class="dot"></i><span id="gpsPill">GPS STANDBY</span></span>
+  <span class="pill"><i id="bleDot" class="dot"></i><span id="blePill">BLE OFFLINE</span></span>
+  <span class="pill"><i id="navDot" class="dot"></i><span id="navPill">NAV IDLE</span></span>
+  <div class="clock">
+   <div id="liveClock">--:--:--</div>
+   <div id="liveDate" class="subtle">---</div>
+  </div>
+ </div>
+</header>
+
+<main class="wrap">
+ <div class="section-head">
+  <div>
+   <div class="eyebrow">System overview</div>
+   <h2>Live navigation telemetry</h2>
+  </div>
+  <div class="subtle">Browser-derived live values · no simulated sensor readings</div>
+ </div>
+
+ <section class="grid kpis">
+  <div class="panel kpi">
+   <div class="kpi-label">GPS accuracy</div>
+   <div class="kpi-value" id="kpiAccuracy">-- m</div>
+   <div class="kpi-foot" id="kpiGpsFoot">Waiting for location permission</div>
+  </div>
+  <div class="panel kpi">
+   <div class="kpi-label">Ground speed</div>
+   <div class="kpi-value" id="kpiSpeed">-- km/h</div>
+   <div class="kpi-foot">From browser GPS velocity</div>
+  </div>
+  <div class="panel kpi">
+   <div class="kpi-label">Route remaining</div>
+   <div class="kpi-value" id="kpiRemaining">--</div>
+   <div class="kpi-foot" id="kpiEta">No active route</div>
+  </div>
+  <div class="panel kpi">
+   <div class="kpi-label">BLE link</div>
+   <div class="kpi-value" id="kpiBle">OFFLINE</div>
+   <div class="kpi-foot" id="kpiBleFoot">ESP32-S3 not connected</div>
+  </div>
+ </section>
+
+ <section class="grid main-grid">
+  <div class="panel map-panel">
+   <div class="panel-title">
+    <div>
+     <div class="eyebrow">Geospatial view</div>
+     <h2>Live route & position</h2>
+    </div>
+    <span class="tag" id="mapState">MAP READY</span>
+   </div>
+
+   <div class="search-row">
+    <input id="destination" placeholder="Search destination, landmark or address" autocomplete="off">
+    <button class="primary" id="searchBtn">Find destination</button>
+    <button class="ghost" id="clearBtn">Clear</button>
+    <button class="ghost" id="recenterBtn">Recenter</button>
+   </div>
+   <div id="searchResults" class="search-results"></div>
+
+   <div class="map-tools">
+    <button class="good" id="gpsBtn">ENABLE GPS</button>
+    <button id="locateBtn">◎ LOCATE ME</button>
+    <button id="fitBtn">FIT ROUTE</button>
+    <button id="followBtn">FOLLOW: ON</button>
+    <button id="fullBtn">FULLSCREEN</button>
+    <button id="clearTrailBtn">CLEAR GPS TRAIL</button>
+   </div>
+
+   <div class="map-tools">
+    <select id="travelProfile">
+     <option value="foot">Walking</option>
+     <option value="cycling">Cycling</option>
+     <option value="driving">Driving</option>
+    </select>
+    <button id="recalcBtn">RECALCULATE ROUTE</button>
+    <button id="shareBtn">SHARE DESTINATION</button>
+    <button id="gpxBtn">EXPORT GPX</button>
+    <button id="voiceBtn">VOICE: OFF</button>
+   </div>
+
+   <div id="map"></div>
+
+   <div class="map-legend">
+    <span><i class="legend-dot" style="background:#35c6e8"></i>Planned route</span>
+    <span><i class="legend-dot" style="background:#35d39a"></i>Current GPS position</span>
+    <span><i class="legend-dot" style="background:#ff647c"></i>Destination</span>
+    <span><i class="legend-dot" style="background:#f4b84a"></i>Next maneuver</span>
+   </div>
+
+   <div class="notice">
+    Map route and maneuver cues are advisory. GPS drift, map data and routing-service limitations can affect turn timing. This prototype is not a certified mobility or emergency-navigation device.
+   </div>
+  </div>
+
+  <aside class="side-stack">
+   <div class="panel pad">
+    <div class="panel-title">
+     <div>
+      <div class="eyebrow">Guidance engine</div>
+      <h2>Next maneuver</h2>
+     </div>
+     <span class="tag" id="navModeTag">STANDBY</span>
+    </div>
+
+    <div class="nav-instruction">
+     <div class="subtle">UPCOMING INSTRUCTION</div>
+     <div class="direction" id="maneuverText">Select a destination</div>
+     <div class="distance" id="maneuverDistance">--</div>
+     <div class="subtle" id="maneuverRoad">No route loaded</div>
+    </div>
+
+    <div class="statline"><span>Route progress</span><strong id="routeProgressText">0%</strong></div>
+    <div class="progress"><span id="routeProgressBar"></span></div>
+    <div class="statline"><span>Destination distance</span><strong id="destinationDistance">--</strong></div>
+    <div class="statline"><span>Estimated time</span><strong id="etaValue">--</strong></div>
+    <div class="statline"><span>Route deviation</span><strong id="deviationValue">--</strong></div>
+    <div class="statline"><span>Next action</span><strong id="nextAction">Waiting</strong></div>
+
+    <div class="inline" style="margin-top:12px">
+     <button class="good" id="startBtn">Start guidance</button>
+     <button class="warn" id="stopBtn">Pause</button>
+    </div>
+   </div>
+
+   <div class="panel pad">
+    <div class="panel-title">
+     <div>
+      <div class="eyebrow">Route optimization</div>
+      <h2>Route alternatives</h2>
+     </div>
+     <span class="tag" id="routeCount">0 OPTIONS</span>
+    </div>
+    <div id="routeChoices" class="route-choices">
+     <div class="small">Search for a destination to calculate routes.</div>
+    </div>
+    <div class="small" style="margin-top:8px">Public routing coverage only; no live traffic or accessibility certification.</div>
+   </div>
+
+   <div class="panel pad">
+    <div class="panel-title">
+     <div>
+      <div class="eyebrow">Wearable feedback</div>
+      <h2>Vibration cue reference</h2>
+     </div>
+     <span class="tag">LIVE DEVICE PROFILE</span>
+    </div>
+
+    <div class="small" style="margin-bottom:10px">
+     The ESP32-S3 drives the RGB LED and the vibration motor on GPIO 4. Connect NAVBAND over BLE or USB Serial before sending a cue; each command activates the matching RGB and haptic pattern.
+    </div>
+
+    <div class="pulse-list">
+     <div class="pulse-row">
+      <div><div class="pulse-code">LEFT · L</div><div class="pulse-bars"><i class="on"></i><i></i><i class="on"></i><i></i><i class="on"></i></div></div>
+      <div class="pulse-pattern">3 short pulses<br><span class="small">180 ms ON · 140 ms OFF × 3</span></div>
+      <span class="pulse-state">Firmware</span>
+     </div>
+     <div class="pulse-row">
+      <div><div class="pulse-code">RIGHT · R</div><div class="pulse-bars"><i class="on"></i><i></i><i class="on"></i><i></i></div></div>
+      <div class="pulse-pattern">2 long pulses<br><span class="small">450 ms ON · 180 ms OFF × 2</span></div>
+      <span class="pulse-state">Firmware</span>
+     </div>
+     <div class="pulse-row">
+      <div><div class="pulse-code">STRAIGHT · S</div><div class="pulse-bars"><i class="on"></i><i></i></div></div>
+      <div class="pulse-pattern">1 short pulse<br><span class="small">120 ms ON</span></div>
+      <span class="pulse-state">Firmware</span>
+     </div>
+     <div class="pulse-row">
+      <div><div class="pulse-code">APPROACH · A</div><div class="pulse-bars"><i class="on"></i><i></i><i class="on"></i><i></i></div></div>
+      <div class="pulse-pattern">2 short pulses<br><span class="small">120 ms ON · 120 ms OFF × 2</span></div>
+      <span class="pulse-state">Firmware</span>
+     </div>
+     <div class="pulse-row">
+      <div><div class="pulse-code">ARRIVED · D</div><div class="pulse-bars"><i class="on"></i><i></i><i class="on"></i><i></i><i class="on"></i></div></div>
+      <div class="pulse-pattern">3 long pulses<br><span class="small">500 ms ON · 250 ms OFF × 3</span></div>
+      <span class="pulse-state">Firmware</span>
+     </div>
+     <div class="pulse-row">
+      <div><div class="pulse-code">ALERT · E</div><div class="pulse-bars"><i class="on"></i><i></i><i class="on"></i><i></i><i class="on"></i></div></div>
+      <div class="pulse-pattern">Repeated alert burst<br><span class="small">100 ms ON · 100 ms OFF × 5</span></div>
+      <span class="pulse-state">Firmware</span>
+     </div>
+    </div>
+    <div class="small" style="margin-top:9px">Pulse timings are the profiles configured in the ESP32 firmware. Validate vibration strength and comfort on the wearable before relying on navigation cues.</div>
+   </div>
+
+   <div class="panel pad log-panel">
+    <div class="panel-title">
+     <div>
+      <div class="eyebrow">Diagnostics</div>
+      <h2>Event & command log</h2>
+     </div>
+     <button class="ghost" id="clearLogBtn">Clear</button>
+    </div>
+    <div class="event-log" id="eventLog">
+     <div class="log-entry"><span class="log-time">SYSTEM</span><span class="log-msg">Console initialized. Awaiting GPS and device connection (BLE or USB).</span></div>
+    </div>
+   </div>
+  </aside>
+ </section>
+
+ <section class="grid two-col">
+  <div class="panel card-pad">
+   <div class="panel-title">
+    <div>
+     <div class="eyebrow">Device interface</div>
+     <h2>Device connection & manual test</h2>
+    </div>
+    <span class="tag">ESP32-S3</span>
+   </div>
+
+   <div class="statline"><span>BLE device</span><strong>NAV_BAND ESP32 / ESP32-S3</strong></div>
+   <div class="statline"><span>Service UUID</span><strong style="font-size:10px">12345678-1234-1234-1234-1234567890ab</strong></div>
+   <div class="statline"><span>Characteristic</span><strong style="font-size:10px">abcdefab-1234-1234-1234-abcdefabcdef</strong></div>
+
+   <div class="inline" style="margin-top:12px">
+    <button class="good" id="connectBtn">Connect BLE</button>
+    <button class="primary" id="connectUSBBtn">Connect USB</button>
+    <button class="danger" id="disconnectBtn">Disconnect</button>
+   </div>
+   <div class="small" style="margin-top:9px">BLE: select NAV_BAND ESP32 in the browser chooser. USB: connect the ESP32-S3 by data-capable USB cable and select its COM port. Use Chrome or Edge on localhost or HTTPS.</div>
+
+   <h3 style="margin-top:17px">Manual RGB + haptic command test</h3>
+   <div class="command-grid">
+    <button id="cmdL">← LEFT</button>
+    <button id="cmdR">RIGHT →</button>
+    <button id="cmdS">↑ STRAIGHT</button>
+    <button class="warn" id="cmdA">APPROACH</button>
+    <button class="good" id="cmdD">ARRIVED</button>
+    <button class="danger" id="cmdE">ALERT</button>
+   </div>
+   <div class="small" id="commandStatus" style="margin-top:10px">No command sent in this session.</div>
+  </div>
+
+  <div class="panel card-pad">
+   <div class="panel-title">
+    <div>
+     <div class="eyebrow">Telemetry & system health</div>
+     <h2>Live diagnostics</h2>
+    </div>
+    <span class="tag">CLIENT STATUS</span>
+   </div>
+
+   <div class="statline"><span>Last GPS update</span><strong id="lastGps">Never</strong></div>
+   <div class="statline"><span>GPS coordinate age</span><strong id="gpsAge">--</strong></div>
+   <div class="statline"><span>Reported heading</span><strong id="headingValue">--</strong></div>
+   <div class="statline"><span>BLE state</span><strong id="bleStateDetail">Disconnected</strong></div>
+   <div class="statline"><span>Routing engine</span><strong id="routingState">Idle</strong></div>
+   <div class="statline"><span>Haptic actuator</span><strong id="hapticState" style="color:var(--cyan)">GPIO 4 · CONFIGURED</strong></div>
+   <div class="statline"><span>Local annotations</span><strong id="annotationCount">0</strong></div>
+
+   <h3 style="margin-top:14px">Local map annotations</h3>
+   <div class="map-tools">
+    <button id="obstacleBtn">＋ OBSTACLE</button>
+    <button id="blockedBtn">＋ BLOCKED PATH</button>
+    <button id="unsafeBtn">＋ UNSAFE AREA</button>
+    <button id="clearAnnotationsBtn">CLEAR</button>
+   </div>
+   <div class="small">Click the map to select a point, then add a local annotation. Reports are not shared.</div>
+   <div class="small" style="margin-top:10px">Values shown here come from browser and device state. No fabricated battery, heart-rate or motor-current telemetry is displayed.</div>
+  </div>
+ </section>
+</main>
+
+<footer>NAVBAND · Assistive Wearable Navigation Prototype · Operational demonstration interface</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+"use strict";
+
+// ==========================================
+// CONFIGURATION
+// ==========================================
+
+const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
+const CHARACTERISTIC_UUID = "abcdefab-1234-1234-1234-abcdefabcdef";
+const DEVICE_NAME = "NAVBAND_ESP32";
+
+const GEOCODER = "https://photon.komoot.io/api/";
+
+const ROUTERS = {
+ foot: "https://routing.openstreetmap.de/routed-foot/route/v1/driving/",
+ cycling: "https://routing.openstreetmap.de/routed-bike/route/v1/driving/",
+ driving: "https://router.project-osrm.org/route/v1/driving/"
+};
+
+const $ = id => document.getElementById(id);
+const setText = (id, value) => {
+ if ($(id)) $(id).textContent = value;
+};
+
+const setDot = (id, state) => {
+ if ($(id)) $(id).className = "dot" + (state ? " " + state : "");
+};
+
+// ==========================================
+// GLOBAL VARIABLES
+// ==========================================
+
+let bleDevice = null;
+let bleCharacteristic = null;
+let bleConnecting = false;
+let serialPort = null;
+let serialWriter = null;
+let activeTransport = null;
+
+let gpsWatch = null;
+let currentPosition = null;
+let currentAccuracy = null;
+let currentSpeed = null;
+let currentHeading = null;
+let lastPositionTime = 0;
+
+let destinationPosition = null;
+let destinationName = "";
+let destinationMarker = null;
+let userMarker = null;
+let accuracyCircle = null;
+let routeLine = null;
+let alternativeLines = [];
+let maneuverMarker = null;
+
+let routeOptions = [];
+let selectedRoute = 0;
+let routeSteps = [];
+let activeStepIndex = 0;
+let routeCoordinates = [];
+let cumulativeRoute = [];
+let routeDistanceMeters = 0;
+let routeDurationSeconds = 0;
+
+let navigationActive = false;
+let routeLoaded = false;
+let follow = true;
+let voiceEnabled = false;
+
+let lastApproachStep = -1;
+let lastTurnStep = -1;
+let lastLowAccuracyLog = 0;
+
+let trailPoints = [];
+let trailLayer;
+let annotationLayer;
+let mapClickPoint = null;
+let annotations = [];
+
+let map;
+let routeRequestToken = 0;
+
+const pulseDescriptions = {
+ L: "3 short pulses · 180 ms ON / 140 ms OFF × 3",
+ R: "2 long pulses · 450 ms ON / 180 ms OFF × 2",
+ S: "1 short pulse · 120 ms ON",
+ A: "2 short pulses · 120 ms ON / 120 ms OFF × 2",
+ D: "3 long pulses · 500 ms ON / 250 ms OFF × 3",
+ E: "5 alert pulses · 100 ms ON / 100 ms OFF × 5"
+};
+
+// ==========================================
+// EVENT LOG
+// ==========================================
+
+function logEvent(message, kind = "") {
+
+ const row = document.createElement("div");
+ const time = document.createElement("span");
+ const msg = document.createElement("span");
+
+ row.className = "log-entry";
+ time.className = "log-time";
+ msg.className = "log-msg " + kind;
+
+ time.textContent = new Date().toLocaleTimeString();
+ msg.textContent = message;
+
+ row.append(time, msg);
+
+ $("eventLog").prepend(row);
+
+ while ($("eventLog").children.length > 60) {
+  $("eventLog").lastElementChild.remove();
+}
+
+}
+
+function escapeHTML(value) {
+ return String(value).replace(/[&<>"']/g, char => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+ }[char]));
+}
+
+// ==========================================
+// FORMATTERS
+// ==========================================
+
+function formatDistance(meters) {
+
+ if (!Number.isFinite(meters)) return "--";
+
+ return meters >= 1000
+  ? (meters / 1000).toFixed(2) + " km"
+  : Math.round(meters) + " m";
+}
+
+function formatDuration(seconds) {
+
+ if (!Number.isFinite(seconds)) return "--";
+
+ const minutes = Math.max(1, Math.round(seconds / 60));
+
+ return minutes >= 60
+  ? Math.floor(minutes / 60) + " h " + minutes % 60 + " min"
+  : minutes + " min";
+}
+
+function haversine(a, b) {
+
+ const R = 6371000;
+ const rad = x => x * Math.PI / 180;
+
+ const dLat = rad(b[0] - a[0]);
+ const dLon = rad(b[1] - a[1]);
+
+ const x =
+  Math.sin(dLat / 2) ** 2 +
+  Math.cos(rad(a[0])) *
+  Math.cos(rad(b[0])) *
+  Math.sin(dLon / 2) ** 2;
+
+ return 2 * R * Math.asin(Math.sqrt(x));
+}
+
+// ==========================================
+// CLOCK
+// ==========================================
+
+function updateClock() {
+
+ const now = new Date();
+
+ setText("liveClock", now.toLocaleTimeString());
+
+ setText(
+  "liveDate",
+  now.toLocaleDateString(undefined, {
+   weekday: "short",
+   day: "2-digit",
+   month: "short",
+   year: "numeric"
+  })
+ );
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+
+// ==========================================
+// MAP INITIALIZATION
+// ==========================================
+
+map = L.map("map", {
+ zoomControl: true
+}).setView([20.2961, 85.8245], 13);
+
+const osm = L.tileLayer(
+ "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+ {
+  maxZoom: 19,
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+ }
+).addTo(map);
+
+const esri = L.tileLayer(
+ "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+ {
+  maxZoom: 19,
+  attribution: "Tiles © Esri"
+ }
+);
+
+const topo = L.tileLayer(
+ "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+ {
+  maxZoom: 17,
+  attribution: "© OpenTopoMap contributors"
+ }
+);
+
+trailLayer = L.layerGroup().addTo(map);
+annotationLayer = L.layerGroup().addTo(map);
+
+L.control.layers(
+ {
+  "OpenStreetMap": osm,
+  "Esri World Street": esri,
+  "OpenTopoMap": topo
+ },
+ {
+  "GPS trail": trailLayer,
+  "Local annotations": annotationLayer
+ },
+ {
+  collapsed: true
+ }
+).addTo(map);
+
+L.control.scale({
+ metric: true,
+ imperial: false
+}).addTo(map);
+
+map.on("click", event => {
+
+ mapClickPoint = [
+  event.latlng.lat,
+  event.latlng.lng
+ ];
+
+ logEvent("Map point selected for local annotation.");
+
+});
+
+// ==========================================
+// GPS TRACKING
+// ==========================================
+
+function startGPS() {
+
+ if (!navigator.geolocation) {
+  alert("Geolocation is unavailable.");
+  return;
+ }
+
+ if (gpsWatch !== null) return;
+
+ setDot("gpsDot", "amber");
+ setText("gpsPill", "GPS ACQUIRING");
+
+ logEvent("GPS tracking requested.");
+
+ gpsWatch = navigator.geolocation.watchPosition(
+  onGPSPosition,
+  onGPSError,
+  {
+   enableHighAccuracy: true,
+   maximumAge: 1000,
+   timeout: 20000
+  }
+ );
+}
+
+function onGPSError(error) {
+
+ setDot("gpsDot", "red");
+ setText("gpsPill", "GPS ERROR");
+
+ logEvent("GPS error: " + error.message, "error");
+
+ if (gpsWatch !== null) {
+  navigator.geolocation.clearWatch(gpsWatch);
+  gpsWatch = null;
+ }
+}
+
+function onGPSPosition(position) {
+
+ const coords = position.coords;
+
+ currentPosition = [
+  coords.latitude,
+  coords.longitude
+ ];
+
+ currentAccuracy = coords.accuracy;
+
+ currentSpeed =
+  Number.isFinite(coords.speed) && coords.speed !== null
+   ? Math.max(0, coords.speed * 3.6)
+   : null;
+
+ currentHeading =
+  Number.isFinite(coords.heading) && coords.heading !== null
+   ? coords.heading
+   : null;
+
+ lastPositionTime = Date.now();
+
+ setDot("gpsDot", "green");
+ setText("gpsPill", "GPS ACTIVE");
+
+ setText("kpiAccuracy", Math.round(coords.accuracy) + " m");
+
+ setText(
+  "kpiGpsFoot",
+  coords.accuracy <= 20
+   ? "Good reported accuracy"
+   : coords.accuracy <= 60
+    ? "Moderate reported accuracy"
+    : "Low confidence · GPS drift possible"
+ );
+
+ setText(
+  "kpiSpeed",
+  currentSpeed === null
+   ? "-- km/h"
+   : currentSpeed.toFixed(1) + " km/h"
+ );
+
+ setText("lastGps", new Date().toLocaleTimeString());
+ setText("gpsAge", "0 s");
+
+ setText(
+  "headingValue",
+  currentHeading === null
+   ? "Not reported"
+   : Math.round(currentHeading) + "°"
+ );
+
+ if (!userMarker) {
+
+  userMarker = L.circleMarker(currentPosition, {
+   radius: 8,
+   color: "#d9fff1",
+   weight: 2,
+   fillColor: "#35d39a",
+   fillOpacity: 1
+  }).addTo(map).bindPopup("Current GPS position");
+
+  map.setView(currentPosition, 16);
+
+ } else {
+
+  userMarker.setLatLng(currentPosition);
+ }
+
+ if (!accuracyCircle) {
+
+  accuracyCircle = L.circle(currentPosition, {
+   radius: coords.accuracy,
+   color: "#35d39a",
+   weight: 1,
+   fillOpacity: .06
+  }).addTo(map);
+
+ } else {
+
+  accuracyCircle.setLatLng(currentPosition);
+  accuracyCircle.setRadius(coords.accuracy);
+ }
+
+ const lastPoint = trailPoints.at(-1);
+
+ if (!lastPoint || haversine(lastPoint, currentPosition) > 4) {
+
+  trailPoints.push(currentPosition.slice());
+
+  if (trailPoints.length > 1200) {
+   trailPoints.shift();
+  }
+
+  trailLayer.clearLayers();
+
+  if (trailPoints.length > 1) {
+
+   L.polyline(trailPoints, {
+    color: "#35c6e8",
+    weight: 3,
+    opacity: .65,
+    dashArray: "5 7"
+   }).addTo(trailLayer);
+  }
+ }
+
+ if (follow && navigationActive) {
+  map.panTo(currentPosition, {
+   animate: true,
+   duration: .35
+  });
+ }
+
+ if (navigationActive) {
+  updateNavigationProgress();
+ }
+}
+
+setInterval(() => {
+
+ if (lastPositionTime) {
+
+  const age = Math.round(
+   (Date.now() - lastPositionTime) / 1000
+  );
+
+  setText("gpsAge", age + " s");
+
+  if (age > 15) {
+
+   setDot("gpsDot", "amber");
+   setText("gpsPill", "GPS STALE");
+
+   setText(
+    "kpiGpsFoot",
+    "No fresh fix for " + age + " seconds"
+   );
+  }
+ }
+
+}, 1000);
+
+// ==========================================
+// DESTINATION SEARCH
+// ==========================================
+
+async function searchDestination() {
+
+ const query = $("destination").value.trim();
+
+ if (!query) {
+  alert("Enter a destination first.");
+  return;
+ }
+
+ setText("routingState", "Searching places…");
+ setText("mapState", "SEARCHING");
+
+ try {
+
+  const response = await fetch(
+   GEOCODER +
+   "?q=" + encodeURIComponent(query) +
+   "&limit=6&lang=en"
+  );
+
+  if (!response.ok) {
+   throw new Error("Place search HTTP " + response.status);
+  }
+
+  const features = (await response.json()).features || [];
+
+  if (!features.length) {
+   throw new Error(
+    "No matching place found. Try a more specific search."
+   );
+  }
+
+  const box = $("searchResults");
+
+  box.replaceChildren();
+  box.classList.add("show");
+
+  features.forEach(feature => {
+
+   const properties = feature.properties || {};
+   const coordinates = feature.geometry.coordinates;
+
+   const name = [
+    properties.name,
+    properties.street,
+    properties.city,
+    properties.state,
+    properties.country
+   ].filter(Boolean).join(", ");
+
+   const element = document.createElement("div");
+
+   element.className = "search-result";
+
+   element.innerHTML =
+    escapeHTML(name || "Unnamed place") +
+    "<small>" +
+    escapeHTML(
+     [properties.postcode, properties.country]
+      .filter(Boolean).join(" · ")
+    ) +
+    "</small>";
+
+   element.addEventListener("click", () => {
+
+    selectDestination(
+     [coordinates[1], coordinates[0]],
+     name || query
+    );
+
+   });
+
+   box.append(element);
+
+  });
+
+  setText("routingState", features.length + " place options");
+
+  logEvent(
+   "Place search returned " + features.length + " result(s).",
+   "good"
+  );
+
+ } catch (error) {
+
+  setText("routingState", "Search failed");
+
+  logEvent(error.message, "error");
+
+  alert(error.message);
+ }
+}
+
+function clearRouteLayers() {
+
+ if (routeLine) {
+  map.removeLayer(routeLine);
+  routeLine = null;
+ }
+
+ alternativeLines.forEach(layer => {
+  map.removeLayer(layer);
+ });
+
+ alternativeLines = [];
+
+ if (maneuverMarker) {
+  map.removeLayer(maneuverMarker);
+  maneuverMarker = null;
+ }
+
+ routeOptions = [];
+
+ $("routeChoices").innerHTML =
+  '<div class="small">No active route.</div>';
+
+ setText("routeCount", "0 OPTIONS");
+}
+
+function clearDestination() {
+
+ $("destination").value = "";
+
+ $("searchResults").classList.remove("show");
+ $("searchResults").replaceChildren();
+
+ destinationPosition = null;
+ destinationName = "";
+
+ routeLoaded = false;
+ navigationActive = false;
+
+ routeRequestToken++;
+
+ clearRouteLayers();
+
+ if (destinationMarker) {
+  map.removeLayer(destinationMarker);
+  destinationMarker = null;
+ }
+
+ setText("maneuverText", "Select a destination");
+ setText("maneuverDistance", "--");
+ setText("maneuverRoad", "No route loaded");
+
+ setText("kpiRemaining", "--");
+ setText("destinationDistance", "--");
+ setText("etaValue", "--");
+ setText("kpiEta", "No active route");
+
+ setText("routeProgressText", "0%");
+
+ $("routeProgressBar").style.width = "0%";
+
+ setText("mapState", "MAP READY");
+ setText("nextAction", "Waiting");
+}
+
+function selectDestination(position, name) {
+
+ destinationPosition = position;
+ destinationName = name;
+
+ $("searchResults").classList.remove("show");
+ $("searchResults").replaceChildren();
+
+ if (destinationMarker) {
+  map.removeLayer(destinationMarker);
+ }
+
+ destinationMarker = L.marker(position)
+  .addTo(map)
+  .bindPopup(
+   "<b>Destination</b><br>" + escapeHTML(name)
+  )
+  .openPopup();
+
+ clearRouteLayers();
+
+ routeLoaded = false;
+ navigationActive = false;
+
+ setText("mapState", "DESTINATION SET");
+
+ logEvent("Destination selected: " + name, "good");
+
+ if (currentPosition) {
+
+  calculateRoutes();
+
+ } else {
+
+  map.setView(position, 15);
+
+  startGPS();
+
+  setText("routingState", "Waiting for GPS fix");
+ }
+}
+
+// ==========================================
+// ROUTE CALCULATION
+// ==========================================
+
+async function calculateRoutes() {
+
+ if (!currentPosition || !destinationPosition) {
+  return;
+ }
+
+ const token = ++routeRequestToken;
+ const profile = $("travelProfile").value;
+
+ setText("routingState", "Requesting " + profile + " route…");
+ setText("mapState", "ROUTING");
+
+ try {
+
+  const pair =
+   currentPosition[1] + "," + currentPosition[0] +
+   ";" +
+   destinationPosition[1] + "," + destinationPosition[0];
+
+  const url =
+   ROUTERS[profile] +
+   pair +
+   "?overview=full&geometries=geojson&steps=true&alternatives=true";
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+   throw new Error("Routing service HTTP " + response.status);
+  }
+
+  const data = await response.json();
+
+  if (token !== routeRequestToken) return;
+
+  if (data.code !== "Ok" || !data.routes?.length) {
+   throw new Error(data.message || "No route returned.");
+  }
+
+  routeOptions = data.routes;
+
+  selectedRoute = 0;
+
+  chooseRoute(0);
+
+  setText("routingState", profile + " route loaded");
+  setText("mapState", "ROUTE LOADED");
+
+  logEvent(
+   profile + " route calculation complete · " +
+   routeOptions.length + " option(s).",
+   "good"
+  );
+
+ } catch (error) {
+
+  if (token !== routeRequestToken) return;
+
+  routeLoaded = false;
+
+  setText("routingState", "Route unavailable");
+  setText("mapState", "ROUTE ERROR");
+
+  logEvent("Routing error: " + error.message, "error");
+
+  alert("Could not calculate route: " + error.message);
+ }
+}
+
+function renderRouteChoices() {
+
+ const host = $("routeChoices");
+
+ host.replaceChildren();
+
+ setText("routeCount", routeOptions.length + " OPTIONS");
+
+ routeOptions.forEach((route, index) => {
+
+  const element = document.createElement("div");
+
+  element.className =
+   "route-choice" +
+   (index === selectedRoute ? " selected" : "");
+
+  const info = document.createElement("div");
+
+  info.innerHTML =
+   "<b>Route " + (index + 1) +
+   (index === 0 ? " · suggested" : "") +
+   "</b><small>" +
+   formatDistance(route.distance) +
+   " · " +
+   formatDuration(route.duration) +
+   "</small>";
+
+  const button = document.createElement("button");
+
+  button.textContent =
+   index === selectedRoute ? "SELECTED" : "USE ROUTE";
+
+  button.addEventListener("click", () => {
+   chooseRoute(index);
+  });
+
+  element.append(info, button);
+
+  host.append(element);
+ });
+}
+
+function chooseRoute(index) {
+
+ if (!routeOptions[index]) return;
+
+ selectedRoute = index;
+
+ const route = routeOptions[index];
+
+ if (routeLine) {
+  map.removeLayer(routeLine);
+ }
+
+ alternativeLines.forEach(layer => {
+  map.removeLayer(layer);
+ });
+
+ alternativeLines = [];
+
+ routeOptions.forEach((option, optionIndex) => {
+
+  if (optionIndex !== index) {
+
+   alternativeLines.push(
+    L.polyline(
+     option.geometry.coordinates.map(
+      coordinate => [coordinate[1], coordinate[0]]
+     ),
+     {
+      color: "#70849a",
+      weight: 4,
+      opacity: .45,
+      dashArray: "7 7"
+     }
+    ).addTo(map)
+   );
+  }
+ });
+
+ routeCoordinates =
+  route.geometry.coordinates.map(
+   coordinate => [coordinate[1], coordinate[0]]
+  );
+
+ routeLine = L.polyline(routeCoordinates, {
+  color: "#35c6e8",
+  weight: 6,
+  opacity: .95
+ }).addTo(map);
+
+ routeDistanceMeters = route.distance;
+ routeDurationSeconds = route.duration;
+
+ routeSteps = [];
+
+ for (const leg of route.legs || []) {
+
+  for (const step of leg.steps || []) {
+
+   const maneuver = step.maneuver || {};
+   const location = maneuver.location || [];
+
+   if (
+    ["depart", "arrive"].includes(maneuver.type) ||
+    location.length < 2
+   ) {
+    continue;
+   }
+
+   routeSteps.push({
+    location: [location[1], location[0]],
+    type: maneuver.type || "",
+    modifier: maneuver.modifier || "",
+    name: step.name || ""
+   });
+  }
+ }
+
+ cumulativeRoute = [0];
+
+ for (let i = 1; i < routeCoordinates.length; i++) {
+
+  cumulativeRoute[i] =
+   cumulativeRoute[i - 1] +
+   haversine(routeCoordinates[i - 1], routeCoordinates[i]);
+ }
+
+ routeLoaded = true;
+
+ activeStepIndex = 0;
+ lastApproachStep = -1;
+ lastTurnStep = -1;
+
+ map.fitBounds(routeLine.getBounds(), {
+  padding: [30, 30]
+ });
+
+ renderRouteChoices();
+
+ setText("kpiRemaining", formatDistance(routeDistanceMeters));
+
+ setText(
+  "kpiEta",
+  formatDuration(routeDurationSeconds) + " · route estimate"
+ );
+
+ setText("destinationDistance", formatDistance(routeDistanceMeters));
+ setText("etaValue", formatDuration(routeDurationSeconds));
+
+ setText(
+  "maneuverText",
+  routeSteps.length
+   ? maneuverLabel(routeSteps[0])
+   : "Follow highlighted route"
+ );
+
+ setText("maneuverDistance", "Awaiting movement");
+
+ setText(
+  "maneuverRoad",
+  routeSteps[0]?.name || "Route loaded"
+ );
+
+ setText("nextAction", "Ready");
+ setText("routeProgressText", "0%");
+
+ $("routeProgressBar").style.width = "0%";
+
+ setText("mapState", "ROUTE LOADED");
+}
+
+// ==========================================
+// MANEUVER INTERPRETATION
+// ==========================================
+
+function maneuverLabel(step) {
+
+ const modifier = (step.modifier || "").toLowerCase();
+ const type = (step.type || "").toLowerCase();
+
+ if (type === "roundabout" || type === "rotary") {
+  return "Enter roundabout";
+ }
+
+ return ({
+  left: "Turn left",
+  right: "Turn right",
+  slight_left: "Bear left",
+  slight_right: "Bear right",
+  sharp_left: "Sharp left",
+  sharp_right: "Sharp right",
+  uturn: "Make a U-turn",
+  straight: "Continue straight"
+ })[modifier] ||
+  (type === "continue"
+   ? "Continue straight"
+   : "Follow route");
+}
+
+function commandForStep(step) {
+
+ const modifier = (step.modifier || "").toLowerCase();
+
+ return modifier.includes("left")
+  ? "L"
+  : modifier.includes("right")
+   ? "R"
+   : "S";
+}
+
+// ==========================================
+// ROUTE PROGRESS AND DEVIATION
+// ==========================================
+
+function nearestRouteProgress(position) {
+
+ let best = Infinity;
+ let along = 0;
+
+ for (let i = 1; i < routeCoordinates.length; i++) {
+
+  const a = routeCoordinates[i - 1];
+  const b = routeCoordinates[i];
+
+  const latitudeScale = 111320;
+  const longitudeScale =
+   111320 * Math.cos(position[0] * Math.PI / 180);
+
+  const ax = (a[1] - position[1]) * longitudeScale;
+  const ay = (a[0] - position[0]) * latitudeScale;
+
+  const bx = (b[1] - position[1]) * longitudeScale;
+  const by = (b[0] - position[0]) * latitudeScale;
+
+  const dx = bx - ax;
+  const dy = by - ay;
+
+  const lengthSquared = dx * dx + dy * dy;
+
+  const t = lengthSquared
+   ? Math.max(
+      0,
+      Math.min(
+       1,
+       -(ax * dx + ay * dy) / lengthSquared
+      )
+     )
+   : 0;
+
+  const distance = Math.hypot(
+   ax + t * dx,
+   ay + t * dy
+  );
+
+  if (distance < best) {
+
+   best = distance;
+
+   along =
+    cumulativeRoute[i - 1] +
+    t * (cumulativeRoute[i] - cumulativeRoute[i - 1]);
+  }
+ }
+
+ return {
+  distance: best,
+  along: along
+ };
+}
+
+function updateNavigationProgress() {
+
+ if (
+  !navigationActive ||
+  !currentPosition ||
+  !destinationPosition ||
+  !routeLoaded
+ ) {
+  return;
+ }
+
+ const destinationDistance =
+  haversine(currentPosition, destinationPosition);
+
+ const nearest = nearestRouteProgress(currentPosition);
+
+ const remaining = Math.max(
+  0,
+  routeDistanceMeters - nearest.along
+ );
+
+ const percentage = Math.max(
+  0,
+  Math.min(
+   99,
+   Math.round(
+    nearest.along / Math.max(routeDistanceMeters, 1) * 100
+   )
+  )
+ );
+
+ setText(
+  "destinationDistance",
+  formatDistance(destinationDistance) + " straight-line"
+ );
+
+ setText("kpiRemaining", formatDistance(remaining));
+
+ setText("routeProgressText", percentage + "%");
+
+ $("routeProgressBar").style.width = percentage + "%";
+
+ const velocity =
+  currentSpeed !== null && currentSpeed > .8
+   ? currentSpeed / 3.6
+   : 1.2;
+
+ const eta = remaining / velocity;
+
+ setText("etaValue", formatDuration(eta));
+
+ setText(
+  "kpiEta",
+  formatDuration(eta) + " · estimated"
+ );
+
+ setText(
+  "deviationValue",
+  formatDistance(nearest.distance)
+ );
+
+ if (nearest.distance > 60) {
+  setText("nextAction", "Off route · verify position");
+ }
+
+ if (destinationDistance <= 18) {
+
+  navigationActive = false;
+
+  setText("navPill", "ARRIVAL PROXIMITY");
+  setDot("navDot", "green");
+
+  setText("navModeTag", "NEAR DESTINATION");
+  setText("maneuverText", "Near destination");
+  setText("maneuverDistance", "Within approx. 18 m");
+  setText("nextAction", "Verify arrival visually");
+
+  sendCommand("D", "automatic");
+
+  logEvent(
+   "Destination proximity threshold reached; verify arrival visually.",
+   "good"
+  );
+
+  return;
+ }
+
+ if (!routeSteps.length) {
+
+  setText("maneuverText", "Follow highlighted route");
+
+  setText(
+   "maneuverDistance",
+   formatDistance(remaining) + " remaining"
+  );
+
+  return;
+ }
+
+ let step = routeSteps[
+  Math.min(activeStepIndex, routeSteps.length - 1)
+ ];
+
+ let distanceToStep =
+  haversine(currentPosition, step.location);
+
+ if (
+  distanceToStep <= 18 &&
+  activeStepIndex < routeSteps.length - 1
+ ) {
+
+  activeStepIndex++;
+
+  lastApproachStep = -1;
+  lastTurnStep = -1;
+
+  step = routeSteps[activeStepIndex];
+
+  distanceToStep =
+   haversine(currentPosition, step.location);
+ }
+
+ setText("maneuverText", maneuverLabel(step));
+
+ setText(
+  "maneuverDistance",
+  formatDistance(distanceToStep) + " to maneuver"
+ );
+
+ setText(
+  "maneuverRoad",
+  step.name || "Road name unavailable"
+ );
+
+ if (distanceToStep <= 25) {
+  setText("nextAction", "Execute maneuver");
+ }
+ else if (distanceToStep <= 85) {
+  setText("nextAction", "Prepare for maneuver");
+ }
+ else {
+  setText("nextAction", "Continue along route");
+ }
+
+ if (maneuverMarker) {
+  map.removeLayer(maneuverMarker);
+ }
+
+ maneuverMarker = L.circleMarker(step.location, {
+  radius: 7,
+  color: "#f4b84a",
+  weight: 2,
+  fillColor: "#f4b84a",
+  fillOpacity: .9
+ }).addTo(map);
+
+ if (currentAccuracy > 60) {
+
+  setText("nextAction", "Low GPS accuracy · cue suppressed");
+
+  if (Date.now() - lastLowAccuracyLog > 20000) {
+
+   lastLowAccuracyLog = Date.now();
+
+   logEvent(
+    "GPS accuracy >60 m; automatic cue suppressed.",
+    "warn"
+   );
+  }
+
+  return;
+ }
+
+ if (
+  distanceToStep <= 85 &&
+  distanceToStep > 25 &&
+  lastApproachStep !== activeStepIndex
+ ) {
+
+  lastApproachStep = activeStepIndex;
+
+  sendCommand("A", "automatic");
+ }
+
+ if (
+  distanceToStep <= 25 &&
+  lastTurnStep !== activeStepIndex
+ ) {
+
+  lastTurnStep = activeStepIndex;
+
+  sendCommand(commandForStep(step), "automatic");
+
+  speak(maneuverLabel(step));
+ }
+}
+
+// ==========================================
+// NAVIGATION CONTROL
+// ==========================================
+
+function startNavigation() {
+
+ if (!currentPosition) {
+
+  alert("Enable GPS first.");
+
+  startGPS();
+
+  return;
+ }
+
+ if (!destinationPosition) {
+
+  alert("Search for a destination first.");
+
+  return;
+ }
+
+ if (!routeLoaded) {
+
+  calculateRoutes().then(() => {
+
+   if (routeLoaded) {
+    activateGuidance();
+   }
+
+  });
+
+  return;
+ }
+
+ activateGuidance();
+}
+
+function activateGuidance() {
+
+ navigationActive = true;
+
+ activeStepIndex = 0;
+ lastApproachStep = -1;
+ lastTurnStep = -1;
+
+ setDot("navDot", "green");
+
+ setText("navPill", "GUIDANCE ACTIVE");
+ setText("navModeTag", "ACTIVE");
+ setText("nextAction", "Monitoring GPS");
+
+ logEvent("Turn guidance activated.", "good");
+
+ updateNavigationProgress();
+}
+
+function pauseNavigation() {
+
+ navigationActive = false;
+
+ setDot("navDot", "amber");
+
+ setText("navPill", "NAV PAUSED");
+ setText("navModeTag", "PAUSED");
+ setText("nextAction", "Paused");
+
+ logEvent("Automatic guidance paused.", "warn");
+}
+
+// ==========================================
+// BLE COMMAND TRANSMISSION
+// ==========================================
+
+async function sendCommand(command, source = "manual") {
+
+ const names = {
+  L: "LEFT", R: "RIGHT", S: "STRAIGHT",
+  A: "APPROACH", D: "ARRIVED", E: "ALERT"
+ };
+
+ try {
+
+  if (activeTransport === "ble" && bleCharacteristic && bleDevice && bleDevice.gatt && bleDevice.gatt.connected) {
+
+   const bytes = new TextEncoder().encode(command);
+   if (bleCharacteristic.properties.write) {
+    await bleCharacteristic.writeValueWithResponse(bytes);
+   } else if (bleCharacteristic.properties.writeWithoutResponse) {
+    await bleCharacteristic.writeValueWithoutResponse(bytes);
+   } else {
+    throw new Error("BLE characteristic is not writable.");
+   }
+
+  } else if (activeTransport === "usb" && serialWriter) {
+
+   // USB firmware expects one command character followed by a newline.
+   const bytes = new TextEncoder().encode(command + "\n");
+   await serialWriter.write(bytes);
+
+  } else {
+
+   setText("commandStatus", "Not transmitted: connect the ESP32 using BLE or USB first.");
+   logEvent("Command " + command + " not sent: no active device connection.", "error");
+   return false;
+  }
+
+  setText("commandStatus", new Date().toLocaleTimeString() + " · " + names[command] + " (" + command + ") · " + source + " · " + activeTransport.toUpperCase());
+  logEvent(
+   (source === "automatic" ? "AUTO" : "MANUAL") + " " + activeTransport.toUpperCase() + " command transmitted to ESP32: " + names[command] + " · " + pulseDescriptions[command] + " · RGB + haptic profile",
+   "good"
+  );
+  return true;
+
+ } catch (error) {
+  setText("commandStatus", "Transmission failed: " + error.message);
+  logEvent(activeTransport.toUpperCase() + " write failed: " + error.message, "error");
+  return false;
+ }
+}
+
+// ==========================================
+// BLE DISCONNECTION HANDLER
+// ==========================================
+
+function onBLEDisconnected() {
+
+ bleCharacteristic = null;
+ if (activeTransport === "ble") activeTransport = null;
+
+ setDot("bleDot", "red");
+
+ setText("blePill", "BLE OFFLINE");
+ setText("kpiBle", "OFFLINE");
+ setText("kpiBleFoot", "ESP32-S3 disconnected");
+ setText("bleStateDetail", "Disconnected");
+
+ logEvent(
+  "BLE peripheral disconnected.",
+  "warn"
+ );
+}
+
+// ==========================================
+// REVISED BLE CONNECTION FUNCTION
+// ==========================================
+
+async function connectBLE() {
+
+ if (bleConnecting) {
+  logEvent("BLE connection is already in progress.", "warn");
+  return;
+ }
+
+ bleConnecting = true;
+
+ const connectButton = $("connectBtn");
+ connectButton.disabled = true;
+
+ try {
+
+  if (!navigator.bluetooth) {
+
+   throw new Error(
+    "Web Bluetooth unavailable. Use Chrome or Edge on localhost or HTTPS."
+   );
+  }
+
+  // Reset old characteristic reference and switch away from USB if necessary.
+  if (serialPort || serialWriter) await disconnectUSB(false);
+  activeTransport = null;
+  bleCharacteristic = null;
+
+  setText("blePill", "BLE CONNECTING");
+  setText("kpiBle", "CONNECTING");
+  setText("kpiBleFoot", "Searching for ESP32-S3");
+
+  setText("bleStateDetail", "Requesting device");
+
+  setDot("bleDot", "amber");
+
+  logEvent("Searching for NAVBAND ESP32...");
+
+  // Request the ESP32 device
+  // Show nearby BLE peripherals instead of requiring one exact advertised name.
+  // This accommodates variants such as "NAV_BAND ESP32" and "NAVBAND_ESP32".
+  bleDevice = await navigator.bluetooth.requestDevice({
+   acceptAllDevices: true,
+   optionalServices: [SERVICE_UUID]
+  });
+
+  logEvent("Device selected: " + bleDevice.name, "good");
+
+  // Register disconnect listener once
+  bleDevice.removeEventListener(
+   "gattserverdisconnected",
+   onBLEDisconnected
+  );
+
+  bleDevice.addEventListener(
+   "gattserverdisconnected",
+   onBLEDisconnected
+  );
+
+  let connected = false;
+  let lastError = null;
+
+  // Retry connection up to 3 times
+  for (let attempt = 1; attempt <= 3; attempt++) {
+
+   try {
+
+    setText(
+     "bleStateDetail",
+     "GATT connection attempt " + attempt
+    );
+
+    logEvent(
+     "GATT connection attempt " + attempt + " of 3."
+    );
+
+    // Connect to GATT server
+    const server = await bleDevice.gatt.connect();
+
+    if (!server.connected) {
+
+     throw new Error(
+      "GATT server disconnected immediately."
+     );
+    }
+
+    logEvent(
+     "GATT connected. Retrieving BLE service...",
+     "good"
+    );
+
+    setText(
+     "bleStateDetail",
+     "Connected · discovering service"
+    );
+
+    // Short stabilization delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    if (!server.connected) {
+
+     throw new Error(
+      "GATT disconnected before service discovery."
+     );
+    }
+
+    // Retrieve service
+    const service = await server.getPrimaryService(
+     SERVICE_UUID
+    );
+
+    logEvent("BLE service discovered.", "good");
+
+    setText(
+     "bleStateDetail",
+     "Service found · discovering characteristic"
+    );
+
+    // Retrieve characteristic
+    const characteristic =
+     await service.getCharacteristic(
+      CHARACTERISTIC_UUID
+     );
+
+    if (!server.connected) {
+
+     throw new Error(
+      "GATT disconnected during characteristic discovery."
+     );
+    }
+
+    // Store characteristic only after successful discovery
+    bleCharacteristic = characteristic;
+
+    connected = true;
+
+    logEvent(
+     "BLE characteristic discovered successfully.",
+     "good"
+    );
+
+    break;
+
+   } catch (error) {
+
+    lastError = error;
+
+    logEvent(
+     "GATT attempt " +
+     attempt +
+     " failed: " +
+     error.message,
+     "error"
+    );
+
+    bleCharacteristic = null;
+
+    // Disconnect stale GATT session before retry
+    if (
+     bleDevice &&
+     bleDevice.gatt &&
+     bleDevice.gatt.connected
+    ) {
+
+     bleDevice.gatt.disconnect();
+    }
+
+    if (attempt < 3) {
+
+     setText(
+      "bleStateDetail",
+      "Retrying connection..."
+     );
+
+     await new Promise(resolve => setTimeout(resolve, 1200));
+    }
+   }
+  }
+
+  if (!connected) {
+
+   throw lastError ||
+    new Error("Unable to establish BLE connection.");
+  }
+
+  // Confirm final GATT state
+  if (!bleDevice.gatt.connected) {
+
+   bleCharacteristic = null;
+
+   throw new Error(
+    "GATT disconnected after service discovery."
+   );
+  }
+
+  // SUCCESS
+  activeTransport = "ble";
+  if (serialWriter) await disconnectUSB(false);
+  setDot("bleDot", "green");
+
+  setText("blePill", "BLE CONNECTED");
+  setText("kpiBle", "ONLINE");
+
+  setText(
+   "kpiBleFoot",
+   "Connected to " + DEVICE_NAME
+  );
+
+  setText(
+   "bleStateDetail",
+   "Connected · characteristic ready"
+  );
+
+  logEvent(
+   "NAVBAND BLE CONNECTION SUCCESSFUL · " + (bleDevice.name || "selected peripheral"),
+   "good"
+  );
+
+ } catch (error) {
+
+  bleCharacteristic = null;
+
+  setDot("bleDot", "red");
+
+  setText("blePill", "BLE FAILED");
+  setText("kpiBle", "OFFLINE");
+
+  setText("kpiBleFoot", "Connection failed");
+
+  setText(
+   "bleStateDetail",
+   error.message
+  );
+
+  logEvent(
+   "BLE connection failed: " + error.message,
+   "error"
+  );
+
+  alert(
+   "BLE connection failed: " + error.message
+  );
+
+ } finally {
+
+  bleConnecting = false;
+
+  connectButton.disabled = false;
+ }
+}
+
+// ==========================================
+// BLE DISCONNECT
+// ==========================================
+
+function disconnectBLE() {
+
+ bleCharacteristic = null;
+
+ if (
+  bleDevice &&
+  bleDevice.gatt &&
+  bleDevice.gatt.connected
+ ) {
+
+  bleDevice.gatt.disconnect();
+
+ } else {
+
+  onBLEDisconnected();
+ }
+}
+
+// ==========================================
+// USB SERIAL FALLBACK (WEB SERIAL)
+// ==========================================
+
+async function connectUSB() {
+ try {
+  if (!("serial" in navigator)) {
+   throw new Error("Web Serial is unavailable. Use desktop Chrome or Edge on HTTPS or localhost.");
+  }
+
+  // Avoid two transports being active at the same time.
+  if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
+  bleCharacteristic = null;
+  activeTransport = null;
+
+  serialPort = await navigator.serial.requestPort();
+  await serialPort.open({ baudRate: 115200 });
+  serialWriter = serialPort.writable.getWriter();
+  activeTransport = "usb";
+
+  setDot("bleDot", "green");
+  setText("blePill", "USB CONNECTED");
+  setText("kpiBle", "USB ONLINE");
+  setText("kpiBleFoot", "USB Serial · 115200 baud");
+  setText("bleStateDetail", "USB Serial connected · COM port ready");
+  logEvent("NAVBAND connected over USB Serial at 115200 baud.", "good");
+  setText("commandStatus", "USB connected. Select a manual test cue or start navigation.");
+
+  if (serialPort.addEventListener) {
+   serialPort.addEventListener("disconnect", onUSBDisconnected);
+  }
+ } catch (error) {
+  activeTransport = null;
+  serialWriter = null;
+  setText("bleStateDetail", "USB connection failed: " + error.message);
+  logEvent("USB connection failed: " + error.message, "error");
+  alert("USB connection failed: " + error.message);
+ }
+}
+
+async function disconnectUSB(updateUI = true) {
+ try {
+  if (serialWriter) {
+   try { await serialWriter.releaseLock(); } catch (_) {}
+   serialWriter = null;
+  }
+  if (serialPort) {
+   try { await serialPort.close(); } catch (_) {}
+   serialPort = null;
+  }
+ } finally {
+  if (activeTransport === "usb") activeTransport = null;
+  if (updateUI) {
+   setDot("bleDot", "red");
+   setText("blePill", "DEVICE OFFLINE");
+   setText("kpiBle", "OFFLINE");
+   setText("kpiBleFoot", "ESP32-S3 disconnected");
+   setText("bleStateDetail", "Disconnected");
+   logEvent("USB Serial disconnected.", "warn");
+  }
+ }
+}
+
+function onUSBDisconnected() {
+ disconnectUSB(true);
+}
+
+async function disconnectDevice() {
+ if (serialPort || serialWriter) await disconnectUSB(false);
+ if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) {
+  bleDevice.gatt.disconnect();
+ } else {
+  bleCharacteristic = null;
+  activeTransport = null;
+  onBLEDisconnected();
+ }
+}
+
+// ==========================================
+// VOICE GUIDANCE
+// ==========================================
+
+function voiceToggle() {
+
+ voiceEnabled = !voiceEnabled;
+
+ setText(
+  "voiceBtn",
+  "VOICE: " + (voiceEnabled ? "ON" : "OFF")
+ );
+
+ if (!voiceEnabled && window.speechSynthesis) {
+  speechSynthesis.cancel();
+ }
+
+ logEvent(
+  "Voice guidance " +
+  (voiceEnabled ? "enabled" : "disabled") +
+  "."
+ );
+}
+
+function speak(text) {
+
+ if (voiceEnabled && window.speechSynthesis) {
+
+  speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+
+  utterance.rate = 1;
+
+  speechSynthesis.speak(utterance);
+ }
+}
+
+// ==========================================
+// MAP UTILITIES
+// ==========================================
+
+function fitMap() {
+
+ if (routeLine) {
+
+  map.fitBounds(
+   routeLine.getBounds(),
+   { padding: [30, 30] }
+  );
+
+ } else if (currentPosition) {
+
+  map.setView(currentPosition, 17);
+
+ } else if (destinationPosition) {
+
+  map.setView(destinationPosition, 15);
+ }
+}
+
+function locateMe() {
+
+ if (!currentPosition) {
+  startGPS();
+  return;
+ }
+
+ map.setView(currentPosition, 18);
+
+ if (userMarker) {
+  userMarker.openPopup();
+ }
+}
+
+function toggleFollow() {
+
+ follow = !follow;
+
+ setText(
+  "followBtn",
+  "FOLLOW: " + (follow ? "ON" : "OFF")
+ );
+}
+
+function clearTrail() {
+
+ trailPoints = [];
+
+ trailLayer.clearLayers();
+
+ logEvent("GPS trail cleared.");
+}
+
+// ==========================================
+// GPX EXPORT
+// ==========================================
+
+function exportGPX() {
+
+ if (!routeCoordinates.length) {
+
+  alert("Calculate a route first.");
+
+  return;
+ }
+
+ const points = routeCoordinates.map(coordinate =>
+
+  `<trkpt lat="${coordinate[0]}" lon="${coordinate[1]}"></trkpt>`
+
+ ).join("");
+
+ const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="NAVBAND">
+ <trk>
+  <name>${escapeHTML(destinationName || "NAVBAND route")}</name>
+  <trkseg>${points}</trkseg>
+ </trk>
+</gpx>`;
+
+ const url = URL.createObjectURL(
+  new Blob(
+   [xml],
+   { type: "application/gpx+xml" }
+  )
+ );
+
+ const link = document.createElement("a");
+
+ link.href = url;
+ link.download = "NAVBAND-route.gpx";
+
+ link.click();
+
+ URL.revokeObjectURL(url);
+
+ logEvent("GPX route exported.", "good");
+}
+
+// ==========================================
+// SHARE DESTINATION
+// ==========================================
+
+async function shareDestination() {
+
+ if (!destinationPosition) {
+
+  alert("Select a destination first.");
+
+  return;
+ }
+
+ const url = new URL(location.href);
+
+ url.searchParams.set(
+  "lat",
+  destinationPosition[0]
+ );
+
+ url.searchParams.set(
+  "lon",
+  destinationPosition[1]
+ );
+
+ url.searchParams.set(
+  "destination",
+  destinationName
+ );
+
+ try {
+
+  if (navigator.share) {
+
+   await navigator.share({
+    title: "NAVBAND destination",
+    text: destinationName,
+    url: url.href
+   });
+
+  } else {
+
+   await navigator.clipboard.writeText(url.href);
+
+   alert("Destination link copied.");
+  }
+
+  logEvent("Destination link shared or copied.", "good");
+
+ } catch (error) {
+
+  if (error.name !== "AbortError") {
+
+   logEvent(
+    "Share failed: " + error.message,
+    "error"
+   );
+  }
+ }
+}
+
+// ==========================================
+// LOCAL MAP ANNOTATIONS
+// ==========================================
+
+function addAnnotation(kind) {
+
+ if (!mapClickPoint) {
+
+  alert("Click a point on the map first.");
+
+  return;
+ }
+
+ const colors = {
+  "OBSTACLE": "#f4b84a",
+  "BLOCKED PATH": "#ff647c",
+  "UNSAFE AREA": "#b58ae8"
+ };
+
+ const color = colors[kind];
+
+ L.circleMarker(mapClickPoint, {
+  radius: 9,
+  color: color,
+  fillColor: color,
+  fillOpacity: .8,
+  weight: 2
+ })
+ .addTo(annotationLayer)
+ .bindPopup(
+  "<b>" + kind + "</b><br>Local annotation only"
+ );
+
+ annotations.push({
+  kind: kind,
+  point: mapClickPoint.slice()
+ });
+
+ setText("annotationCount", annotations.length);
+
+ logEvent(
+  "Local annotation added: " + kind,
+  "warn"
+ );
+}
+
+function clearAnnotations() {
+
+ annotationLayer.clearLayers();
+
+ annotations = [];
+
+ setText("annotationCount", "0");
+
+ logEvent("Local annotations cleared.");
+}
+
+// ==========================================
+// FULLSCREEN
+// ==========================================
+
+function toggleFullscreen() {
+
+ const element = $("map").parentElement;
+
+ if (!document.fullscreenElement) {
+
+  element.requestFullscreen?.().then(() => {
+
+   setTimeout(() => map.invalidateSize(), 250);
+
+  });
+
+ } else {
+
+  document.exitFullscreen?.().then(() => {
+
+   setTimeout(() => map.invalidateSize(), 250);
+
+  });
+ }
+}
+
+// ==========================================
+// SHARED DESTINATION RESTORATION
+// ==========================================
+
+function handleSharedDestination() {
+
+ const url = new URL(location.href);
+
+ const latitude = Number(url.searchParams.get("lat"));
+ const longitude = Number(url.searchParams.get("lon"));
+
+ const name = url.searchParams.get("destination");
+
+ if (
+  Number.isFinite(latitude) &&
+  Number.isFinite(longitude) &&
+  Math.abs(latitude) <= 90 &&
+  Math.abs(longitude) <= 180
+ ) {
+
+  $("destination").value = name || "Shared destination";
+
+  selectDestination(
+   [latitude, longitude],
+   name || "Shared destination"
+  );
+ }
+}
+
+// ==========================================
+// EVENT LISTENERS
+// ==========================================
+
+$("searchBtn").addEventListener(
+ "click",
+ searchDestination
+);
+
+$("destination").addEventListener(
+ "keydown",
+ event => {
+  if (event.key === "Enter") {
+   searchDestination();
+  }
+ }
+);
+
+$("clearBtn").addEventListener(
+ "click",
+ clearDestination
+);
+
+$("gpsBtn").addEventListener(
+ "click",
+ startGPS
+);
+
+$("locateBtn").addEventListener(
+ "click",
+ locateMe
+);
+
+$("recenterBtn").addEventListener(
+ "click",
+ locateMe
+);
+
+$("fitBtn").addEventListener(
+ "click",
+ fitMap
+);
+
+$("followBtn").addEventListener(
+ "click",
+ toggleFollow
+);
+
+$("fullBtn").addEventListener(
+ "click",
+ toggleFullscreen
+);
+
+$("clearTrailBtn").addEventListener(
+ "click",
+ clearTrail
+);
+
+$("recalcBtn").addEventListener(
+ "click",
+ calculateRoutes
+);
+
+$("shareBtn").addEventListener(
+ "click",
+ shareDestination
+);
+
+$("gpxBtn").addEventListener(
+ "click",
+ exportGPX
+);
+
+$("voiceBtn").addEventListener(
+ "click",
+ voiceToggle
+);
+
+$("travelProfile").addEventListener(
+ "change",
+ () => {
+  if (destinationPosition && currentPosition) {
+   calculateRoutes();
+  }
+ }
+);
+
+$("startBtn").addEventListener(
+ "click",
+ startNavigation
+);
+
+$("stopBtn").addEventListener(
+ "click",
+ pauseNavigation
+);
+
+$("connectBtn").addEventListener(
+ "click",
+ connectBLE
+);
+
+$("connectUSBBtn").addEventListener(
+ "click",
+ connectUSB
+);
+
+$("disconnectBtn").addEventListener(
+ "click",
+ disconnectDevice
+);
+
+$("clearLogBtn").addEventListener(
+ "click",
+ () => {
+  $("eventLog").replaceChildren();
+  logEvent("Event log cleared.");
+ }
+);
+
+["L", "R", "S", "A", "D", "E"].forEach(command => {
+
+ $("cmd" + command).addEventListener(
+  "click",
+  () => sendCommand(command, "manual")
+ );
+
+});
+
+$("obstacleBtn").addEventListener(
+ "click",
+ () => addAnnotation("OBSTACLE")
+);
+
+$("blockedBtn").addEventListener(
+ "click",
+ () => addAnnotation("BLOCKED PATH")
+);
+
+$("unsafeBtn").addEventListener(
+ "click",
+ () => addAnnotation("UNSAFE AREA")
+);
+
+$("clearAnnotationsBtn").addEventListener(
+ "click",
+ clearAnnotations
+);
+
+// ==========================================
+// STARTUP
+// ==========================================
+
+setDot("gpsDot", "");
+setDot("bleDot", "");
+setDot("navDot", "");
+
+logEvent(
+ "NAVBAND OPS initialized · dark console with navigation features."
+);
+
+logEvent(
+ "RGB + haptic outputs configured · vibration motor on ESP32 GPIO 4.",
+ "good"
+);
+
+handleSharedDestination();
+
+</script>
+</body>
+</html>
